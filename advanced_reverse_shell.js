@@ -1,6 +1,4 @@
 // ------------------------------------------------------------------------------------------------------------
-// Antoine the cat's advanced reverse shell generator.
-//
 // This script will generate a reverse shell for you, asking for the IP and Port to connect to as well as
 // the type of shell you want to generate and if you need to open a terminal window before sending the payload.
 // OS Supported: Linux, Mac
