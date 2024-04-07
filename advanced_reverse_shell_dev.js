@@ -1,12 +1,72 @@
 // ------------------------------------------------------------------------------------------------------------
 // This script will generate a reverse shell for you, asking for the IP and Port to connect to as well as
 // the type of shell you want to generate and if you need to open a terminal window before sending the payload.
+// shoutout to @jamisonderek for the speaker api.
 // OS Supported: Linux, Mac, Windows
 //
-// At this stage I'm figuring out a way to bypass the Windows Defender and send a powershell payload.
+// At this stage I'm figuring out a way to bypass the Windows Defender and send a powershell payload.   
 //
 // By B3rt1ng, https://github.com/b3rt1ng
 // ------------------------------------------------------------------------------------------------------------
+let Speaker = ({
+    _acquired : false,
+    _acquire : ffi("int furi_hal_speaker_acquire(int)"),
+    start : ffi("void furi_hal_speaker_start(float, float)"),
+    stop : ffi("void furi_hal_speaker_stop()"),
+    _release : ffi("void furi_hal_speaker_release()"),
+    acquire : function(timeout) {
+      if (!this._acquired) {
+        this._acquired = this._acquire(timeout);
+      }
+      return this._acquired;
+    },
+    acquired : function() {
+      return this._acquired;
+    },
+    release : function() {
+      if (this._acquired) {
+        this._release();
+        this._acquired = false;
+      }
+    },
+    play : function(frequency, volume, duration) {
+      let already_acquired = this.acquired();
+      if (!already_acquired) {
+        this.acquire(1000);
+      };
+      if (this.acquired()) {
+        this.start(frequency, volume);
+        delay(duration);
+        this.stop();
+      }
+      if (!already_acquired) {
+        this.release();
+      }
+    },
+  }
+);
+
+function play(note, duration, wait, octave){
+    duration = duration * 1.5;
+    wait = wait * 1.5;
+    let notes = {"C": 261.63,"C#": 277.18,"D": 293.66,"D#": 311.13,"E": 329.63,"F": 349.23,"F#": 369.99,"G": 392.00,"G#": 415.30,"A": 440.00,"A#": 466.16,"B": 493.88};
+    Speaker.play(notes[note]*(octave), 1, duration);
+    delay(wait);
+}
+
+function victory() {
+    play("C", 40, 10, 2);
+    play("G", 100, 150, 2);
+    play("C", 60, 10, 2);
+    play("G", 400, 10, 2);
+}
+
+function go_in() {
+    play("C", 10, 0, 6);
+    play("G", 10, 0, 5);
+    play("D", 10, 0, 4);
+    play("C", 10, 0, 3);
+}
 
 let keyboard = require('keyboard');
 let submenu = require("submenu");
@@ -107,8 +167,10 @@ while (!badusb.isConnected()) {
 }
 
 notify.blink("blue", "short");
-notify.error();
-delay(1000);
+for (let i = 0; i < 3; i++) {
+    go_in();
+    delay(150);
+}
 
 if (shellType === 6 || shellType === 7) {
     print("sending powershell payload...");
@@ -148,5 +210,5 @@ if (shellType === 6 || shellType === 7) {
 }
 
 badusb.quit();
-notify.success();
+victory();
 notify.blink("green", "long");
