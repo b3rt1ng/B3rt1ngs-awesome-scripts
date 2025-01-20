@@ -229,11 +229,11 @@ function startBadusb() {
             if (hideActions === "Tmux") {
                 badusb.println("tmux new-session -d -s \"none\" \"" + command + "\"");
                 badusb.press("ALT", "F4");
-                Delay(100);
+                delay(100);
             } else if (hideActions === "Screen") {
                 badusb.println("screen -dmS \"none\" " + command);
                 badusb.press("ALT", "F4");
-                Delay(100);
+                delay(100);
             } else {
                 badusb.println(command);
             }
