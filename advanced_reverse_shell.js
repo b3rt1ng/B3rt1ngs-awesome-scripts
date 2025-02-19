@@ -103,7 +103,7 @@ function updateOverview(views) {
         "Open terminal: " + openTerminal,
         "Send payload",
     ]);
-    views.overView.set("header", "BadUSB demo");
+    views.overView.set("header", "Payload");
     gui.viewDispatcher.switchTo(views.overView);
 }
 
